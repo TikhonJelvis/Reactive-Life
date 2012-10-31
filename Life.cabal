@@ -42,7 +42,7 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 
-executable Life
+executable life
   -- .hs or .lhs file containing the Main module.
   main-is:             src/Life/Main.hs
   
@@ -50,5 +50,6 @@ executable Life
   -- other-modules:       
   
   -- Other library packages from which modules are imported.
-  build-depends:       base ==4.5.*
+  build-depends: base ==4.5.*, wx ==0.13.*, reactive-banana ==0.6.*,
+                 reactive-banana-wx ==0.6.*, repa ==3.2.*
   
