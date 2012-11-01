@@ -7,7 +7,6 @@ import qualified Data.Array.Repa     as R
 import qualified Data.Vector.Unboxed as V
 
 import           Graphics.UI.WX      hiding (Event)
-import qualified Graphics.UI.WXCore  as WX
 
 import           Reactive.Banana
 import           Reactive.Banana.WX
@@ -16,17 +15,24 @@ import           Life.Game
 
 main :: IO ()
 main = start $ do
-  mw <- frame [text := "Title", resizeable := False]
-  lifePanel <- panel mw [bgcolor := white]
-  set mw [layout := minsize (sz 800 800) $ widget lifePanel]
+  mw          <- frame     [text := "John Conway's Game of Life", resizeable := False]
+  lifePanel   <- panel  mw [bgcolor := white]
+  pauseButton <- button mw [text := "❚❚"]
+  
+  set mw [layout := column 2 [minsize (sz 50 25)   $ widget pauseButton,
+                              minsize (sz 800 800) $ widget lifePanel]]
 
   tt  <- timer mw [interval := 100]
 
-  let network :: forall t. NetworkDescription t ()
-      network = do time <- event0 tt command
-                   let life = accumB (rPentonimo `embed` blank 200 200) $ step <$ time
-                   sink lifePanel [on paint :== renderLife <$> life]
-                   reactimate $ repaint lifePanel <$ time
+  let network = do
+        time   <- event0 tt command
+        clicks <- event0 pauseButton command
+        let start  = rPentonimo `embed` blank 200 200
+            active = accumB True $ not <$ clicks
+            life   = accumB start . whenE active $ step <$ time
+        sink lifePanel [on paint :== renderLife <$> life]
+        reactimate $ repaint lifePanel <$ time
+        reactimate $ (\ t -> set pauseButton [text := if t then "▶" else "❚❚"]) <$> active <@ clicks
 
   compile network >>= actuate
 
