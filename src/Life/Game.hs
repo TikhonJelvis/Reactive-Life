@@ -4,11 +4,11 @@
 
 module Life.Game where
 
-import           Data.Array.Repa              ((:.) (..), Z (..), (!))
-import qualified Data.Array.Repa              as R
-import           Data.Array.Repa.Stencil      (Boundary (..), Stencil)
-import           Data.Array.Repa.Stencil.Dim2 (makeStencil2, mapStencil2,
-                                               stencil2)
+import           Data.Array.Repa                  ((:.) (..), Z (..), (!))
+import qualified Data.Array.Repa                  as R
+import           Data.Array.Repa.Stencil          (Boundary (..), Stencil)
+import           Data.Array.Repa.Stencil.Dim2     (makeStencil2, mapStencil2,
+                                                   stencil2)
 
   -- Based on the slides at
   -- http://illustratedhaskell.org/index.php/2011/09/24/conways-game-of-life-with-repa/
@@ -56,3 +56,8 @@ transition 0 _ = 0
 step :: LifeGrid -> LifeGrid
 step grid = R.computeUnboxedS $ R.zipWith transition grid neighborCount
   where neighborCount = mapStencil2 (BoundConst 0) neighbors grid
+
+modify :: (Int, Int) -> LifeGrid -> LifeGrid
+modify (x, y) grid = R.computeUnboxedS $ R.fromFunction (R.extent grid) go
+  where go i@(Z :. x' :. y') | x' == x && y' == y = if grid ! i == 0 then 1 else 0
+                             | otherwise       = grid ! i
