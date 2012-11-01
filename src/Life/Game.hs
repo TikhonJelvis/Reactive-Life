@@ -28,7 +28,7 @@ rPentonimo = R.fromListUnboxed (Z :. 3 :. 3) $ [0, 1, 1,
                                                 0, 1, 0]
 
 -- | A blank width × height grid.
-blank :: Int -> Int -> R.Array R.U R.DIM2 Int
+blank :: Int -> Int -> LifeGrid
 blank width height = R.fromListUnboxed (Z :. width :. height) $ replicate (width * height) 0
 
 -- | Center the given pattern in the given grid.
