@@ -14,15 +14,16 @@ import           Life.Game
 main :: IO ()
 main = start $ do
   mw          <- frame         [text := "John Conway's Game of Life", resizeable := False]
+  lifeTimer   <- timer      mw [interval := 100]
   lifePanel   <- panel      mw [bgcolor := white]
   pauseButton <- button     mw [text := "▶"]
   clearButton <- button     mw [text := "✘"]
-  lifeTimer   <- timer      mw [interval := 100]
   genLabel    <- staticText mw [text := "generation 0"]
+  speedSlider <- hslider    mw False 0 100 [selection := 70]
 
   let pos width height control = minsize (sz width height) $ widget control
-  set mw [layout := column 2 [row 3 [pos 50 25 pauseButton, pos 50 25 clearButton,
-                                     floatRight $ pos 125 25 genLabel],
+  set mw [layout := column 2 [row 4 [pos 50 25 pauseButton, pos 50 25 clearButton,
+                                     pos 100 25 speedSlider, floatRight $ pos 125 25 genLabel],
                               pos 800 800 lifePanel]]
 
   let network =
@@ -30,14 +31,16 @@ main = start $ do
            pauses <- event0 pauseButton command
            clears <- event0 clearButton command
            clicks <- event1 lifePanel   mouse
-           let start  = (0, blank 200 200)
-               active = accumB False $ not <$ pauses
-               life   = accumB start $ whenE active ((succ *** step) <$ time) `union`
-                        (modifyGrid <$> clicks) `union` (const start <$ clears)
+           speed  <- behavior speedSlider selection
+           let active  = accumB False $ not <$ pauses
+               changes = unions [whenE active ((succ *** step) <$ time), modifyGrid <$> clicks,
+                                 const (0, blank 200 200) <$ clears]
+               life    = accumB (0, blank 200 200) changes
            sink lifePanel [on paint :== renderLife . snd <$> life]
-           reactimate $ repaint lifePanel <$ time
+           reactimate $ repaint lifePanel <$ changes
            reactimate $ setText pauseButton . (\ t -> if t then "▶" else "❚❚") <$> active <@ pauses
-           reactimate $ setText genLabel . ("generation " ++) . show . fst <$> life <@ time
+           reactimate $ setText genLabel . ("generation " ++) . show . fst <$> life <@ changes
+           sink lifeTimer [interval :== (\ n -> (100 - n) * 3 + 10) <$> speed]
 
   compile network >>= actuate
   where setText c t = set c [text := t]
