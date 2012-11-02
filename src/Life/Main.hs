@@ -1,10 +1,10 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
-import           Data.Array.Repa     ((:.) (..), Z (..), (!), extent)
-import qualified Data.Vector.Unboxed as V
+import           Control.Arrow      ((***), second)
 
-import           Graphics.UI.WX      hiding (Event)
+import           Data.Array.Repa    ((:.) (..), Z (..), extent, (!))
+
+import           Graphics.UI.WX     hiding (Event)
 
 import           Reactive.Banana
 import           Reactive.Banana.WX
@@ -13,28 +13,35 @@ import           Life.Game
 
 main :: IO ()
 main = start $ do
-  mw          <- frame     [text := "John Conway's Game of Life", resizeable := False]
-  lifePanel   <- panel  mw [bgcolor := white]
-  pauseButton <- button mw [text := "❚❚"]
+  mw          <- frame         [text := "John Conway's Game of Life", resizeable := False]
+  lifePanel   <- panel      mw [bgcolor := white]
+  pauseButton <- button     mw [text := "▶"]
+  clearButton <- button     mw [text := "✘"]
+  lifeTimer   <- timer      mw [interval := 100]
+  genLabel    <- staticText mw [text := "generation 0"]
 
-  set mw [layout := column 2 [minsize (sz 50 25)   $ widget pauseButton,
-                              minsize (sz 800 800) $ widget lifePanel]]
+  let pos width height control = minsize (sz width height) $ widget control
+  set mw [layout := column 2 [row 3 [pos 50 25 pauseButton, pos 50 25 clearButton,
+                                     floatRight $ pos 125 25 genLabel],
+                              pos 800 800 lifePanel]]
 
-  tt <- timer mw [interval := 100]
-
-  let network = do
-        time   <- event0 tt command
-        pauses <- event0 pauseButton command
-        clicks <- event1 lifePanel mouse
-        let start  = rPentonimo `embed` blank 200 200
-            active = accumB True $ not <$ pauses
-            life   = accumB start $ whenE active (step <$ time) `union` (modifyGrid <$> clicks)
-        sink lifePanel [on paint :== renderLife <$> life]
-        reactimate $ repaint lifePanel <$ time
-        reactimate $ (\ t -> set pauseButton [text := if t then "▶" else "❚❚"]) <$> active <@ pauses
+  let network =
+        do time   <- event0 lifeTimer   command
+           pauses <- event0 pauseButton command
+           clears <- event0 clearButton command
+           clicks <- event1 lifePanel   mouse
+           let start  = (0, blank 200 200)
+               active = accumB False $ not <$ pauses
+               life   = accumB start $ whenE active ((succ *** step) <$ time) `union`
+                        (modifyGrid <$> clicks) `union` (const start <$ clears)
+           sink lifePanel [on paint :== renderLife . snd <$> life]
+           reactimate $ repaint lifePanel <$ time
+           reactimate $ setText pauseButton . (\ t -> if t then "▶" else "❚❚") <$> active <@ pauses
+           reactimate $ setText genLabel . ("generation " ++) . show . fst <$> life <@ time
 
   compile network >>= actuate
-  where modifyGrid (MouseLeftDown (Point x y) _) = modify (x `div` 4, y `div` 4)
+  where setText c t = set c [text := t]
+        modifyGrid (MouseLeftDown (Point x y) _) = second $ modify (x `div` 4, y `div` 4)
         modifyGrid _                             = id
 
 renderLife :: LifeGrid -> DC a -> Rect -> IO ()

@@ -54,5 +54,5 @@ executable life
   -- other-modules:       
   
   -- Other library packages from which modules are imported.
-  build-depends: base ==4.5.*, wx ==0.13.*, wxcore ==0.13.*, reactive-banana ==0.6.*,
-                 reactive-banana-wx ==0.6.*, repa ==3.2.*, vector ==0.9.*, life
+  build-depends: base ==4.5.*, wx ==0.13.*, reactive-banana ==0.6.*,
+                 reactive-banana-wx ==0.6.*, repa ==3.2.*, life
