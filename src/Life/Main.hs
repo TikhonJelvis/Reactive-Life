@@ -32,7 +32,6 @@ main = start $ do
            clears  <- event0 clearButton command
            clicks  <- event1 lifePanel   mouse
            slides  <- event0 speedSlider command
-           speed   <- behavior speedSlider selection
            let active  = accumB False $ not <$ pauses
                changes = unions [whenE active ((succ *** step) <$ time), modifyGrid <$> clicks,
                                  const (0, blank 200 200) <$ clears]
@@ -41,7 +40,8 @@ main = start $ do
            reactimate $ repaint lifePanel <$ changes
            sink pauseButton [text :== (\ t -> if t then "❚❚" else "▶") <$> active]
            sink genLabel [text :== ("generation: " ++) . show . fst <$> life]
-           sink lifeTimer [interval :== (\ n -> (100 - n) * 3 + 10) <$> speed]
+           let updateTimer n = set lifeTimer [interval := (100 - n) * 3 + 10]
+           reactimate $ (get speedSlider selection >>= updateTimer) <$ slides
 
   compile network >>= actuate
   where modifyGrid (MouseLeftDown (Point x y) _) = second $ modify (x `div` 4, y `div` 4)
