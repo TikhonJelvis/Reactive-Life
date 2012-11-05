@@ -4,10 +4,10 @@
 
 module Life.Game where
 
-import           Data.Array.Repa                  ((:.) (..), Z (..), (!))
-import qualified Data.Array.Repa                  as R
-import           Data.Array.Repa.Stencil          (Boundary (..), Stencil)
-import           Data.Array.Repa.Stencil.Dim2     
+import           Data.Array.Repa              ((:.) (..), Z (..), (!))
+import qualified Data.Array.Repa              as R
+import           Data.Array.Repa.Stencil      (Boundary (..), Stencil)
+import           Data.Array.Repa.Stencil.Dim2
 
   -- Based on the slides at
   -- http://illustratedhaskell.org/index.php/2011/09/24/conways-game-of-life-with-repa/
@@ -36,7 +36,15 @@ transition 0 _ = 0
 step :: LifeGrid -> LifeGrid
 step grid = R.computeUnboxedS . R.zipWith transition grid $ mapStencil2 (BoundConst 0) neighbors grid
 
+-- | Flips the value at the given point. If the value is 0, it becomes
+-- 1; otherwise, it becomes 0.
 modify :: (Int, Int) -> LifeGrid -> LifeGrid
 modify p grid = R.computeUnboxedS $ R.fromFunction (R.extent grid) go
   where go i@(Z :. x' :. y') | p == (x', y') = if grid ! i == 0 then 1 else 0
+                             | otherwise    = grid ! i
+
+-- | Sets the given pixel to either alive or dead.
+setPx :: (Int, Int) -> Bool -> LifeGrid -> LifeGrid
+setPx p v grid = R.computeUnboxedS $ R.fromFunction (R.extent grid) go
+  where go i@(Z :. x' :. y') | p == (x', y') = if v then 1 else 0
                              | otherwise    = grid ! i

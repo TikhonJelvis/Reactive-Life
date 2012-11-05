@@ -45,6 +45,7 @@ main = start $ do
 
   compile network >>= actuate
   where modifyGrid (MouseLeftDown (Point x y) _) = second $ modify (x `div` 4, y `div` 4)
+        modifyGrid (MouseLeftDrag (Point x y) _) = second $ setPx (x `div` 4, y `div` 4) True
         modifyGrid _                             = id
 
 renderLife :: LifeGrid -> DC a -> Rect -> IO ()
