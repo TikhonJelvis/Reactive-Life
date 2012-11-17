@@ -42,9 +42,3 @@ modify :: (Int, Int) -> LifeGrid -> LifeGrid
 modify p grid = R.computeUnboxedS $ R.fromFunction (R.extent grid) go
   where go i@(Z :. x' :. y') | p == (x', y') = if grid ! i == 0 then 1 else 0
                              | otherwise    = grid ! i
-
--- | Sets the given pixel to either alive or dead.
-setPx :: (Int, Int) -> Bool -> LifeGrid -> LifeGrid
-setPx p v grid = R.computeUnboxedS $ R.fromFunction (R.extent grid) go
-  where go i@(Z :. x' :. y') | p == (x', y') = if v then 1 else 0
-                             | otherwise    = grid ! i
