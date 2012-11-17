@@ -31,18 +31,18 @@ main = start $ do
                               pos 800 800 lifePanel]]
 
   let network =
-        do time   <- event0   lifeTimer   command
-           pauses <- event0   pauseButton command
-           steps  <- event0   stepButton  command
-           clears <- event0   clearButton command
-           clicks <- event1   lifePanel   mouse
-           slides <- event0   speedSlider command
-           zoom   <- behavior zoomSlider  selection
-           zooms  <- event0   zoomSlider  command
+        do time       <- event0   lifeTimer   command
+           pauses     <- event0   pauseButton command
+           steps      <- event0   stepButton  command
+           clears     <- event0   clearButton command
+           mouseMoves <- event1   lifePanel   mouse
+           slides     <- event0   speedSlider command
+           zoom       <- behavior zoomSlider  selection
+           zooms      <- event0   zoomSlider  command
            let active  = accumB False $ not <$ pauses
                changes = unions [whenE active ((succ *** step) <$ time),
                                  (succ *** step) <$ steps,
-                                 uncurry modifyGrid <$> (((,) <$> zoom) <@> clicks),
+                                 uncurry modifyGrid <$> (((,) <$> zoom) <@> mouseMoves),
                                  const (0, blank 800 800) <$ clears]
                life    = accumB (0, blank 800 800) changes
            sink lifePanel [on paint :== renderLife <$> zoom <*> (snd <$> life)]
@@ -56,8 +56,9 @@ main = start $ do
   where modifyGrid zoom (MouseLeftDown (Point x y) _) = second $ modify (x `div` zoom, y `div` zoom)
         modifyGrid zoom (MouseLeftDrag (Point x y) _) = second $ setPx (x `div` zoom, y `div` zoom) True
         modifyGrid _ _                                = id
-
+        
 renderLife :: Int -> LifeGrid -> DC a -> Rect -> IO ()
-renderLife zoom grid ctx _ = sequence_ $ [drawPx x y | x <- [0..width - 1], y <- [0..height - 1], grid ! (Z :. x :. y) == 1]
+renderLife zoom grid ctx _ =
+  sequence_ $ [drawPx (x) (y) | x <- [0..width - 1], y <- [0..height - 1], grid ! (Z :. x :. y) == 1]
   where Z :. width :. height = extent grid
         drawPx x y = drawRect ctx (Rect (x * zoom) (y * zoom) zoom zoom) [bgcolor := black]

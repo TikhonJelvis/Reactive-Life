@@ -50,7 +50,7 @@ executable life
   -- .hs or .lhs file containing the Main module.
   main-is:             src/Life/Main.hs
   
-  ghc-options:         -threaded
+  ghc-options:         -threaded -O2
 
   -- Modules included in this executable, other than Main.
   -- other-modules:       
