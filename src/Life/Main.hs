@@ -1,16 +1,12 @@
 module Main where
 
-import           Control.Applicative ((<*>))
-import           Control.Arrow       (second, (***))
+import Graphics.UI.WX hiding (Event)
+import Reactive.Banana
+import Reactive.Banana.WX
+import Life.Game
 
-import           Data.Array.Repa     ((:.) (..), Z (..), extent, (!))
-
-import           Graphics.UI.WX      hiding (Event)
-
-import           Reactive.Banana
-import           Reactive.Banana.WX
-
-import           Life.Game
+scale :: Int
+scale = 4
 
 main :: IO ()
 main = start $ do
@@ -19,26 +15,24 @@ main = start $ do
   lifePanel   <- panel  mw [bgcolor := white]
   pauseButton <- button mw [text := "▶"]
 
-  let pos width height control = minsize (sz width height) $ widget control
-  set mw [layout := column 2 [pos 40 25 pauseButton, pos 800 800 lifePanel]]
+  set mw [layout := column 2 [minsize (sz 40 25)   $ widget pauseButton,
+                              minsize (sz 400 400) $ widget lifePanel]]
 
-  let network =
-        do time   <- event0   lifeTimer   command
-           pauses <- event0   pauseButton command
-           clicks <- event1   lifePanel   click
-           let active  = accumB False $ not <$ pauses
-               changes = whenE active (step <$ time) `union` (modify . toPt <$> clicks)
-               life    = accumB (blank 200 200) changes
-           sink lifePanel [on paint :== renderLife <$> life]
-           reactimate $ repaint lifePanel <$ changes
-           sink pauseButton [text :== (\ t -> if t then "❚❚" else "▶") <$> active]
+  network <- compile $ do
+    time   <- event0 lifeTimer   command
+    pauses <- event0 pauseButton command
+    clicks <- filterJust . fmap toClick <$> event1 lifePanel mouse
+    let active  = accumB False $ not <$ pauses
+        changes = whenE active (step <$ time) `union` (modify <$> clicks)
+        life    = accumB (blank 100 100) changes
+    sink lifePanel [on paint :== renderLife <$> life]
+    reactimate $ repaint lifePanel <$ changes
+    sink pauseButton [text :== (\ t -> if t then "❚❚" else "▶") <$> active]
 
-  compile network >>= actuate
-  where toPt (Point x y) = (x, y)
+  actuate network
+  where toClick (MouseLeftDown (Point x y) _) = Just (x `div` scale, y `div` scale)
+        toClick _                             = Nothing
 
-renderLife :: LifeGrid -> DC a -> Rect -> IO ()
-renderLife grid ctx _ =
-  sequence_ $ [drawPx (x) (y) | x <- [0..width - 1], y <- [0..height - 1], grid ! (Z :. x :. y) == 1]
-  where zoom = 4
-        Z :. width :. height = extent grid
-        drawPx x y = drawRect ctx (Rect (x * zoom) (y * zoom) zoom zoom) [bgcolor := black]
+renderLife :: Life -> DC a -> Rect -> IO ()
+renderLife grid ctx _ = sequence_ $ drawPx <$> render grid
+  where drawPx (x, y) = drawRect ctx (Rect (x * scale) (y * scale) scale scale) [bgcolor := black]
