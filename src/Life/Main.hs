@@ -16,7 +16,7 @@ main = start $ do
   pauseButton <- button mw [text := "▶"]
 
   set mw [layout := column 2 [minsize (sz 40 25)   $ widget pauseButton,
-                              minsize (sz 400 400) $ widget lifePanel]]
+                              minsize (sz 800 800) $ widget lifePanel]]
 
   network <- compile $ do
     time   <- event0 lifeTimer   command
@@ -34,5 +34,5 @@ main = start $ do
         toClick _                             = Nothing
 
 renderLife :: Life -> DC a -> Rect -> IO ()
-renderLife grid ctx _ = sequence_ $ drawPx <$> render grid
+renderLife grid ctx _ = mapM_ drawPx $ render grid
   where drawPx (x, y) = drawRect ctx (Rect (x * scale) (y * scale) scale scale) [bgcolor := black]
