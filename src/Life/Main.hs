@@ -23,11 +23,13 @@ main = start $ do
     pauses <- event0 pauseButton command
     clicks <- filterJust . fmap toClick <$> event1 lifePanel mouse
     let active  = accumB False $ not <$ pauses
-        changes = whenE active (step <$ time) `union` (modify <$> clicks)
+        changes = whenE active (step <$ time) `union`
+                  (modify <$> clicks)
         life    = accumB (blank 100 100) changes
     sink lifePanel [on paint :== renderLife <$> life]
     reactimate $ repaint lifePanel <$ changes
-    sink pauseButton [text :== (\ t -> if t then "❚❚" else "▶") <$> active]
+    let symb b = if b then "❚❚" else "▶"
+    sink pauseButton [text :== symb <$> active]
 
   actuate network
   where toClick (MouseLeftDown (Point x y) _) = Just (x `div` scale, y `div` scale)
