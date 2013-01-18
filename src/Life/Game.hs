@@ -2,15 +2,22 @@
 {-# LANGUAGE QuasiQuotes      #-}
 {-# LANGUAGE TemplateHaskell  #-}
 
+--------------------------------------------------------------------------------
+-- |
+-- Module: Life.Game
+-- 
+-- This is a very simple implementation of the rules of John Conway's
+-- Game of Life. It uses `Repa' arrays and `Stencil' functionality.
+-- 
+-- This is based on slides at
+-- <http://illustratedhaskell.org/index.php/2011/09/24/conways-game-of-life-with-repa/>
+
 module Life.Game where
 
 import           Data.Array.Repa              ((:.) (..), Z (..), (!))
 import qualified Data.Array.Repa              as R
 import           Data.Array.Repa.Stencil      (Boundary (..), Stencil)
 import           Data.Array.Repa.Stencil.Dim2
-
-  -- Based on the slides at
-  -- http://illustratedhaskell.org/index.php/2011/09/24/conways-game-of-life-with-repa/
 
 type LifeGrid = R.Array R.U R.DIM2 Int
 
