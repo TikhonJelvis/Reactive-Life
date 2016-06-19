@@ -4,6 +4,8 @@
 
 This is an old demo of functional reactive programming (FRP), originally built to illustrate the abstraction for a class project in CS 263 at Berkeley. It uses `reactive-banana` and wxWidgets, which might be hard to build.
 
+The slides for my talk are [up on my website](http://jelv.is/frp).
+
 [1]: http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 
 The actual—surprisingly simple—implementation of the game itself was largely influenced by [some slides][2] by a kizzx2 I found online. Repa's stencil API is natural for the Game of Life, and the Game of Life is a nice illustration of the API.
