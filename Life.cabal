@@ -19,7 +19,7 @@ synopsis:            Conway's game of life
 -- description:         
 
 -- The license under which the package is released.
-license:             GPL-3
+license:             BSD3
 
 -- The file containing the license text.
 license-file:        LICENSE
