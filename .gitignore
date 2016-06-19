@@ -1,7 +1,9 @@
-# Ignore emacs backup files:
+# Emacs files:
 *~
-*.hi
-*.o
 \#*\#
+
+# Compile artifacts:
 dist
 cabal-dev
+*.hi
+*.o
