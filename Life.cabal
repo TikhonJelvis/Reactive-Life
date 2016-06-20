@@ -27,5 +27,6 @@ executable life
   -- Other library packages from which modules are imported.
   build-depends: base >=4.8 && <5
                , containers
+               , repa >= 3.2
                , threepenny-gui
                , reactive-life
