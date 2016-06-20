@@ -13,7 +13,7 @@ import           Graphics.UI.Threepenny.Core
 
 import qualified Reactive.Threepenny           as UI
 
-import           Life
+import           Game
 
 main :: IO ()
 main = startGUI defaultConfig setup
@@ -22,7 +22,6 @@ setup :: Window -> UI ()
 setup w = void $ do
   return w # set title "A Reactive Game of Life"
   canvas <- lifeCanvas
-  drawGrid def rPentomino canvas
   timer <- UI.timer # set UI.interval 200
   let updates = step <$ UI.tick timer
   grids <- UI.accumE rPentomino updates
@@ -30,8 +29,8 @@ setup w = void $ do
   timer # UI.start
   getBody w #+ [return canvas]
 
-data Options = Options { -- | the bounds, measured in life cells (not pixels!)
-                         bounds :: ((Int, Int), (Int, Int))
+data Options = Options { -- | the size of the grid, measured in cells (not pixels!)
+                         size   :: (Int, Int)
                        , -- | the size, in pixels, of each cell
                          scale  :: Int
                        , -- | the color of the life cells
@@ -40,7 +39,7 @@ data Options = Options { -- | the bounds, measured in life cells (not pixels!)
 
 -- | Some sensible default options for rendering a game of life grid.
 def :: Options
-def = Options { bounds = ((-200, -200), (200, 200))
+def = Options { size   = (400, 400)
               , scale  = 5
               , color  = Canvas.htmlColor "black"
               }
@@ -58,19 +57,12 @@ drawGrid :: Options -> Grid -> Canvas -> UI ()
 drawGrid options grid canvas = do
   Canvas.clearCanvas canvas
   return canvas # set Canvas.fillStyle (color options)
-                # set UI.width width
-                # set UI.height height
-  forM_ points $ \ (x, y) -> do
-    Canvas.fillRect (pt' (x * scale, y * scale)) cell cell canvas
-  where Options { scale, bounds = ((x₁, y₁), (x₂, y₂)) } = options
-        width  = fromIntegral $ (x₂ - x₁) * scale
-        height = fromIntegral $ (y₂ - y₁) * scale
+                # set UI.width (width * scale)
+                # set UI.height (height * scale)
+  forM_ (render grid) $ \ (x, y) -> do
+    Canvas.fillRect (pt (x * scale, y * scale)) cell cell canvas
+  where Options { scale, size = (width, height) } = options
         cell   = fromIntegral scale
-
-        pt' (x, y) = pt (x - x₁, y - y₁)
-
-        points = toList $ Set.filter within grid
-        within (x, y) = x >= x₁ && x <= x₂ && y >= y₁ && y <= y₂
 
 registerUpdate :: Canvas -> Event Grid -> UI ()
 registerUpdate canvas steps = do

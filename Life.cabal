@@ -14,9 +14,10 @@ cabal-version:       >=1.8
 Library
   Build-depends:       base >=4.8 && <5
                      , containers
+                     , repa >= 3.2
                      , threepenny-gui
   Hs-source-dirs:      src
-  Exposed-modules:     Life
+  Exposed-modules:     Game
 
 executable life
   -- .hs or .lhs file containing the Main module.
