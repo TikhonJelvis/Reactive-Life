@@ -11,6 +11,8 @@ import           Graphics.UI.Threepenny.Canvas (Canvas)
 import qualified Graphics.UI.Threepenny.Canvas as Canvas
 import           Graphics.UI.Threepenny.Core
 
+import qualified Reactive.Threepenny           as UI
+
 import           Life
 
 main :: IO ()
@@ -20,7 +22,12 @@ setup :: Window -> UI ()
 setup w = void $ do
   return w # set title "A Reactive Game of Life"
   canvas <- lifeCanvas
-  drawGrid def (steps rPentomino !! 1103) canvas
+  drawGrid def rPentomino canvas
+  timer <- UI.timer # set UI.interval 200
+  let updates = step <$ UI.tick timer
+  grids <- UI.accumE rPentomino updates
+  registerUpdate canvas grids
+  timer # UI.start
   getBody w #+ [return canvas]
 
 data Options = Options { -- | the bounds, measured in life cells (not pixels!)
@@ -64,3 +71,9 @@ drawGrid options grid canvas = do
 
         points = toList $ Set.filter within grid
         within (x, y) = x >= x₁ && x <= x₂ && y >= y₁ && y <= y₂
+
+registerUpdate :: Canvas -> Event Grid -> UI ()
+registerUpdate canvas steps = do
+  window <- askWindow
+  liftIO . void . register steps $ \ grid -> do
+    runUI window $ drawGrid def grid canvas
