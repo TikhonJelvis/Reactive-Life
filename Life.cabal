@@ -28,4 +28,4 @@ executable life
   build-depends: base >=4.8 && <5
                , containers
                , threepenny-gui
-               , life
+               , reactive-life

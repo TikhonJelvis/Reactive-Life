@@ -4,7 +4,7 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, base, containers, life, stdenv
+  f = { mkDerivation, base, containers, stdenv
       , threepenny-gui
       }:
       mkDerivation {
@@ -14,7 +14,7 @@ let
         isLibrary = true;
         isExecutable = true;
         libraryHaskellDepends = [ base containers threepenny-gui ];
-        executableHaskellDepends = [ base containers life threepenny-gui ];
+        executableHaskellDepends = [ base containers threepenny-gui ];
         homepage = "jelv.is/frp";
         description = "Conway's game of life as a demo of functional reactive programming";
         license = stdenv.lib.licenses.bsd3;
