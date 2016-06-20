@@ -1,4 +1,5 @@
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NamedFieldPuns  #-}
+{-# LANGUAGE RecordWildCards #-}
 module Main where
 
 import           Control.Monad                 (forM_, void)
@@ -20,21 +21,37 @@ main = startGUI defaultConfig setup
 
 setup :: Window -> UI ()
 setup w = void $ do
+  let Options {..} = def
   return w # set title "A Reactive Game of Life"
-  canvas <- lifeCanvas
-  timer <- UI.timer # set UI.interval 200
+
+  canvas      <- lifeCanvas
+
+  timer       <- UI.timer # set UI.interval 200
   let updates = step <$ UI.tick timer
-  grids <- UI.accumE rPentomino updates
+
+  mouse <- mouse canvas
+  let adjust (x, y) = (x `div` scale, y `div` scale)
+  let modifies      = modify . adjust <$> mouse <@ UI.click canvas
+  let doAll         = foldr (.) id
+  let changes       = doAll <$> UI.unions [updates, modifies]
+
+  grids <- UI.accumE rPentomino changes
+
   registerUpdate canvas grids
   timer # UI.start
   getBody w #+ [return canvas]
 
+-- | The mouse position, in pixel coordinates relative to the top
+-- lefthand corner of the given element.
+mouse :: Element -> UI (Behavior (Int, Int))
+mouse element = accumB (0, 0) $ const <$> UI.mousemove element
+
 data Options = Options { -- | the size of the grid, measured in cells (not pixels!)
-                         size   :: (Int, Int)
+                         size  :: (Int, Int)
                        , -- | the size, in pixels, of each cell
-                         scale  :: Int
+                         scale :: Int
                        , -- | the color of the life cells
-                         color  :: Canvas.FillStyle
+                         color :: Canvas.FillStyle
                        }
 
 -- | Some sensible default options for rendering a game of life grid.
